@@ -2,7 +2,9 @@
 ## Title: QuickVolume
 ## Notes: Quick mouse volume control
 ## Author: Cyan
-## Version: 2.2
+## Version: 2.3
+## OptionalDeps: NDui
 
 lang.lua
 QuickVolume.lua
+NDui.lua
