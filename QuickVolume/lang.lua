@@ -70,6 +70,9 @@ local ZHTW = {
     TOOLTIP_LEFT   = "左鍵：開啟音量面板",
     TOOLTIP_MIDDLE = "中鍵：靜音 / 恢復",
     TOOLTIP_WHEEL  = "滾輪：調整主音量",
+
+    OUTPUT_DEVICE = "Output Device",
+    SYSTEM_DEFAULT = "System Default",
 }
 
 --------------------------------------------------
@@ -90,6 +93,9 @@ local DE = {
     TOOLTIP_LEFT   = "Linksklick: Lautstärkefenster",
     TOOLTIP_MIDDLE = "Mittelklick: Stumm / Ton an",
     TOOLTIP_WHEEL  = "Mausrad: Gesamtlautstärke",
+
+    OUTPUT_DEVICE = "Output Device",
+    SYSTEM_DEFAULT = "System Default",    
 }
 
 --------------------------------------------------
@@ -110,6 +116,9 @@ local FR = {
     TOOLTIP_LEFT   = "Clic gauche : panneau du volume",
     TOOLTIP_MIDDLE = "Clic milieu : Muet / Son",
     TOOLTIP_WHEEL  = "Molette : volume général",
+
+    OUTPUT_DEVICE = "Output Device",
+    SYSTEM_DEFAULT = "System Default",
 }
 
 --------------------------------------------------
@@ -130,6 +139,9 @@ local KO = {
     TOOLTIP_LEFT   = "왼쪽 클릭: 볼륨 패널",
     TOOLTIP_MIDDLE = "가운데 클릭: 음소거",
     TOOLTIP_WHEEL  = "마우스 휠: 전체 볼륨",
+
+    OUTPUT_DEVICE = "Output Device",
+    SYSTEM_DEFAULT = "System Default",
 }
 
 --------------------------------------------------
@@ -150,6 +162,9 @@ local ES = {
     TOOLTIP_LEFT   = "Clic izquierdo: panel de volumen",
     TOOLTIP_MIDDLE = "Clic central: silenciar",
     TOOLTIP_WHEEL  = "Rueda: volumen general",
+
+    OUTPUT_DEVICE = "Output Device",
+    SYSTEM_DEFAULT = "System Default",
 }
 
 --------------------------------------------------
@@ -170,6 +185,9 @@ local RU = {
     TOOLTIP_LEFT   = "ЛКМ: панель громкости",
     TOOLTIP_MIDDLE = "СКМ: звук вкл/выкл",
     TOOLTIP_WHEEL  = "Колесо: общая громкость",
+
+    OUTPUT_DEVICE = "Output Device",
+    SYSTEM_DEFAULT = "System Default",
 }
 
 --------------------------------------------------
@@ -190,6 +208,9 @@ local PT = {
     TOOLTIP_LEFT   = "Clique esquerdo: painel de volume",
     TOOLTIP_MIDDLE = "Clique do meio: Mudo / Som",
     TOOLTIP_WHEEL  = "Roda do mouse: volume geral",
+
+    OUTPUT_DEVICE = "Output Device",
+    SYSTEM_DEFAULT = "System Default",
 }
 
 --------------------------------------------------
@@ -210,6 +231,9 @@ local IT = {
     TOOLTIP_LEFT   = "Clic sinistro: pannello volume",
     TOOLTIP_MIDDLE = "Clic centrale: Muto / Audio",
     TOOLTIP_WHEEL  = "Rotella: volume generale",
+
+    OUTPUT_DEVICE = "Output Device",
+    SYSTEM_DEFAULT = "System Default",
 }
 
 --------------------------------------------------
