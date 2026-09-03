@@ -1,13 +1,14 @@
 --------------------------------------------------
--- QuickVolume v2.2
+-- QuickVolume
 --------------------------------------------------
 
-local L = QuickVolume_L
+local L = QuickVolume_L or {}
 
-local addon = CreateFrame("Frame")
+local addon =
+    CreateFrame("Frame")
 
 --------------------------------------------------
--- Settings
+-- Constants
 --------------------------------------------------
 
 local BUTTON_SIZE = 28
@@ -15,34 +16,110 @@ local BUTTON_SIZE = 28
 local NORMAL_ICON =
     "Interface\\COMMON\\VoiceChat-Speaker"
 
+local PANEL_ALPHA = 0.65
+
 local previousMasterVolume = 1
+
+--------------------------------------------------
+-- NDui Detection
+--------------------------------------------------
+
+local NDUI_ENABLED =
+    C_AddOns.IsAddOnLoaded("NDui")
+
+--------------------------------------------------
+-- Slider Template
+--
+-- NDui:
+--   plain slider, NDui.lua draws everything
+--
+-- Default:
+--   Blizzard OptionsSliderTemplate
+--------------------------------------------------
+
+local SLIDER_TEMPLATE
+
+if NDUI_ENABLED then
+    SLIDER_TEMPLATE = nil
+else
+    SLIDER_TEMPLATE =
+        "OptionsSliderTemplate"
+end
+
+--------------------------------------------------
+-- Localization Fallback
+--------------------------------------------------
+
+local TEXT_TITLE =
+    L.TITLE or "QuickVolume"
+
+local TEXT_MASTER =
+    L.MASTER or "Master"
+
+local TEXT_MUSIC =
+    L.MUSIC or "Music"
+
+local TEXT_SFX =
+    L.SFX or "SFX"
+
+local TEXT_DIALOG =
+    L.DIALOG or "Dialog"
+
+local TEXT_OUTPUT_DEVICE =
+    L.OUTPUT_DEVICE or "Output Device"
+
+local TEXT_TOOLTIP_LEFT =
+    L.TOOLTIP_LEFT
+    or
+    "Left Click: Volume panel"
+
+local TEXT_TOOLTIP_MIDDLE =
+    L.TOOLTIP_MIDDLE
+    or
+    "Middle Click: Mute / Unmute"
+
+local TEXT_TOOLTIP_WHEEL =
+    L.TOOLTIP_WHEEL
+    or
+    "Mouse Wheel: Master volume"
 
 --------------------------------------------------
 -- Utility
 --------------------------------------------------
 
-local function Clamp(value, minValue, maxValue)
+local function Clamp(
+    value,
+    minValue,
+    maxValue
+)
 
     if value < minValue then
         return minValue
-    elseif value > maxValue then
+    end
+
+    if value > maxValue then
         return maxValue
     end
 
     return value
-end
 
+end
 
 local function GetVolume(cvar)
 
-    return tonumber(
-        GetCVar(cvar)
-    ) or 0
+    return
+        tonumber(
+            GetCVar(cvar)
+        )
+        or
+        0
 
 end
 
-
-local function SetVolume(cvar, value)
+local function SetVolume(
+    cvar,
+    value
+)
 
     value =
         Clamp(
@@ -58,18 +135,17 @@ local function SetVolume(cvar, value)
 
 end
 
-
 local function Percent(value)
 
-    return math.floor(
-        value * 100 + 0.5
-    )
+    return
+        math.floor(
+            value * 100 + 0.5
+        )
 
 end
 
-
 --------------------------------------------------
--- Main Button
+-- Main Speaker Button
 --------------------------------------------------
 
 local button =
@@ -93,6 +169,7 @@ button:SetPoint(
 )
 
 button:SetMovable(true)
+
 button:EnableMouse(true)
 
 button:RegisterForDrag(
@@ -125,7 +202,7 @@ icon:SetTexture(
 button.icon = icon
 
 --------------------------------------------------
--- Mute X
+-- Mute Mark
 --------------------------------------------------
 
 local muteMark =
@@ -194,7 +271,7 @@ local function UpdateSpeakerIcon()
 end
 
 --------------------------------------------------
--- Drag
+-- Dragging
 --------------------------------------------------
 
 button:SetScript(
@@ -216,7 +293,7 @@ button:SetScript(
 )
 
 --------------------------------------------------
--- Basic Panel
+-- Panel Creator
 --------------------------------------------------
 
 local function CreatePanel(name)
@@ -234,7 +311,6 @@ local function CreatePanel(name)
     )
 
     frame:SetBackdrop({
-
         bgFile =
             "Interface\\Buttons\\WHITE8X8",
 
@@ -249,21 +325,21 @@ local function CreatePanel(name)
             top = 3,
             bottom = 3
         }
-
     })
 
     frame:SetBackdropColor(
         0,
         0,
         0,
-        0.65
+        PANEL_ALPHA
     )
 
     return frame
+
 end
 
 --------------------------------------------------
--- Create +/- Button
+-- +/- Button Creator
 --------------------------------------------------
 
 local function CreateAdjustButton(
@@ -308,7 +384,12 @@ local function CreateAdjustButton(
         "CENTER"
     )
 
-    label:SetText(text)
+    label:SetText(
+        text
+    )
+
+    btn.label =
+        label
 
     btn:SetScript(
         "OnClick",
@@ -342,9 +423,8 @@ local function CreateAdjustButton(
     )
 
     return btn
+
 end
-
-
 
 --------------------------------------------------
 -- Hover Panel
@@ -357,33 +437,41 @@ local hoverPanel =
 
 hoverPanel:SetSize(
     64,
-    190
+    200
 )
 
+hoverPanel:SetClampedToScreen(
+    true
+)
 
 hoverPanel:Hide()
 
 --------------------------------------------------
--- Smart Hover Panel Position
+-- Hover Position
 --------------------------------------------------
 
 local function UpdateHoverPosition()
 
-    local buttonX, buttonY =
+    local buttonX,
+          buttonY =
         button:GetCenter()
 
     local screenHeight =
         UIParent:GetHeight()
 
-    if not buttonX or not buttonY then
+    if
+        not buttonX
+        or
+        not buttonY
+    then
         return
     end
 
     hoverPanel:ClearAllPoints()
 
     --------------------------------------------------
-    -- 图标在屏幕下半部
-    -- 面板向上弹
+    -- Bottom half:
+    -- open upward
     --------------------------------------------------
 
     if buttonY < screenHeight / 2 then
@@ -397,8 +485,8 @@ local function UpdateHoverPosition()
         )
 
     --------------------------------------------------
-    -- 图标在屏幕上半部
-    -- 面板向下弹
+    -- Top half:
+    -- open downward
     --------------------------------------------------
 
     else
@@ -433,7 +521,7 @@ hoverTitle:SetPoint(
 )
 
 hoverTitle:SetText(
-    L.MASTER
+    TEXT_MASTER
 )
 
 --------------------------------------------------
@@ -454,16 +542,31 @@ hoverPercent:SetPoint(
 )
 
 --------------------------------------------------
--- Hover Slider
+-- Hover Master Slider
 --------------------------------------------------
 
-local masterSlider =
-    CreateFrame(
-        "Slider",
-        "QuickVolumeMasterSlider",
-        hoverPanel,
-        "OptionsSliderTemplate"
-    )
+local masterSlider
+
+if SLIDER_TEMPLATE then
+
+    masterSlider =
+        CreateFrame(
+            "Slider",
+            "QuickVolumeMasterSlider",
+            hoverPanel,
+            SLIDER_TEMPLATE
+        )
+
+else
+
+    masterSlider =
+        CreateFrame(
+            "Slider",
+            "QuickVolumeMasterSlider",
+            hoverPanel
+        )
+
+end
 
 masterSlider:SetOrientation(
     "VERTICAL"
@@ -496,26 +599,46 @@ masterSlider:SetObeyStepOnDrag(
 )
 
 --------------------------------------------------
--- Clear Default Labels
+-- Clear Blizzard Slider Labels
 --------------------------------------------------
 
-local sliderName =
-    masterSlider:GetName()
+if SLIDER_TEMPLATE then
 
-if _G[sliderName .. "Low"] then
-    _G[sliderName .. "Low"]:SetText("")
-end
+    local sliderName =
+        masterSlider:GetName()
 
-if _G[sliderName .. "High"] then
-    _G[sliderName .. "High"]:SetText("")
-end
+    if sliderName then
 
-if _G[sliderName .. "Text"] then
-    _G[sliderName .. "Text"]:SetText("")
+        if _G[sliderName .. "Low"] then
+
+            _G[
+                sliderName .. "Low"
+            ]:SetText("")
+
+        end
+
+        if _G[sliderName .. "High"] then
+
+            _G[
+                sliderName .. "High"
+            ]:SetText("")
+
+        end
+
+        if _G[sliderName .. "Text"] then
+
+            _G[
+                sliderName .. "Text"
+            ]:SetText("")
+
+        end
+
+    end
+
 end
 
 --------------------------------------------------
--- Update Hover
+-- Update Master Slider
 --------------------------------------------------
 
 local function UpdateMasterSlider()
@@ -531,7 +654,8 @@ local function UpdateMasterSlider()
 
     hoverPercent:SetText(
         Percent(volume)
-        .. "%"
+        ..
+        "%"
     )
 
     UpdateSpeakerIcon()
@@ -539,7 +663,7 @@ local function UpdateMasterSlider()
 end
 
 --------------------------------------------------
--- Hover - up
+-- Hover -
 --------------------------------------------------
 
 local hoverMinus =
@@ -569,9 +693,8 @@ local hoverMinus =
         end
     )
 
-
 --------------------------------------------------
--- Hover + buttom
+-- Hover +
 --------------------------------------------------
 
 local hoverPlus =
@@ -602,12 +725,15 @@ local hoverPlus =
     )
 
 --------------------------------------------------
--- Slider Change
+-- Master Slider Callback
 --------------------------------------------------
 
 masterSlider:SetScript(
     "OnValueChanged",
-    function(self, value)
+    function(
+        self,
+        value
+    )
 
         SetVolume(
             "Sound_MasterVolume",
@@ -616,7 +742,8 @@ masterSlider:SetScript(
 
         hoverPercent:SetText(
             Percent(value)
-            .. "%"
+            ..
+            "%"
         )
 
         UpdateSpeakerIcon()
@@ -625,7 +752,7 @@ masterSlider:SetScript(
 )
 
 --------------------------------------------------
--- Main Control Panel
+-- Full Control Panel
 --------------------------------------------------
 
 local controlPanel =
@@ -635,25 +762,30 @@ local controlPanel =
 
 controlPanel:SetSize(
     320,
-    310
+    330
 )
 
 controlPanel:SetPoint(
     "CENTER"
 )
 
-controlPanel:SetMovable(true)
-controlPanel:EnableMouse(true)
+controlPanel:SetMovable(
+    true
+)
+
+controlPanel:EnableMouse(
+    true
+)
 
 controlPanel:RegisterForDrag(
     "LeftButton"
 )
 
-controlPanel:Hide()
+controlPanel:SetClampedToScreen(
+    true
+)
 
---------------------------------------------------
--- Panel Drag
---------------------------------------------------
+controlPanel:Hide()
 
 controlPanel:SetScript(
     "OnDragStart",
@@ -674,24 +806,24 @@ controlPanel:SetScript(
 )
 
 --------------------------------------------------
--- Panel Title
+-- Main Panel Title
 --------------------------------------------------
 
-local panelTitle =
+local title =
     controlPanel:CreateFontString(
         nil,
         "OVERLAY",
         "GameFontNormalLarge"
     )
 
-panelTitle:SetPoint(
+title:SetPoint(
     "TOP",
     0,
-    -15
+    -12
 )
 
-panelTitle:SetText(
-    L.TITLE
+title:SetText(
+    TEXT_TITLE
 )
 
 --------------------------------------------------
@@ -701,41 +833,47 @@ panelTitle:SetText(
 local closeButton =
     CreateFrame(
         "Button",
-        nil,
+        "QuickVolumeControlPanelCloseButton",
         controlPanel,
         "UIPanelCloseButton"
     )
 
 closeButton:SetPoint(
     "TOPRIGHT",
-    -3,
-    -3
+    controlPanel,
+    "TOPRIGHT",
+    -2,
+    -2
 )
 
 --------------------------------------------------
--- Channels
+-- Volume Channels
 --------------------------------------------------
 
 local channels = {
 
     {
-        name = L.MASTER,
-        cvar = "Sound_MasterVolume"
+        name = TEXT_MASTER,
+        cvar =
+            "Sound_MasterVolume"
     },
 
     {
-        name = L.MUSIC,
-        cvar = "Sound_MusicVolume"
+        name = TEXT_MUSIC,
+        cvar =
+            "Sound_MusicVolume"
     },
 
     {
-        name = L.SFX,
-        cvar = "Sound_SFXVolume"
+        name = TEXT_SFX,
+        cvar =
+            "Sound_SFXVolume"
     },
 
     {
-        name = L.DIALOG,
-        cvar = "Sound_DialogVolume"
+        name = TEXT_DIALOG,
+        cvar =
+            "Sound_DialogVolume"
     }
 
 }
@@ -743,51 +881,58 @@ local channels = {
 local channelSliders = {}
 
 --------------------------------------------------
--- Create Channel Slider
+-- Build Volume Columns
 --------------------------------------------------
 
-local function CreateVolumeSlider(
-    parent,
-    data,
-    index
-)
+for index,
+    data
+in ipairs(channels)
+do
 
     local container =
         CreateFrame(
             "Frame",
             nil,
-            parent
+            controlPanel
         )
 
     container:SetSize(
         65,
-        175
+        185
     )
 
     container:SetPoint(
         "TOPLEFT",
-        25 + ((index - 1) * 72),
-        -50
+        controlPanel,
+        "TOPLEFT",
+        18
+        +
+        (
+            index - 1
+        )
+        *
+        72,
+        -45
     )
 
     --------------------------------------------------
-    -- Title
+    -- Channel Name
     --------------------------------------------------
 
-    local title =
+    local channelName =
         container:CreateFontString(
             nil,
             "OVERLAY",
-            "GameFontNormal"
+            "GameFontNormalSmall"
         )
 
-    title:SetPoint(
+    channelName:SetPoint(
         "TOP",
         0,
         0
     )
 
-    title:SetText(
+    channelName:SetText(
         data.name
     )
 
@@ -795,17 +940,28 @@ local function CreateVolumeSlider(
     -- Slider
     --------------------------------------------------
 
-    local sliderName =
-        "QuickVolumeSlider"
-        .. index
+    local slider
 
-    local slider =
-        CreateFrame(
-            "Slider",
-            sliderName,
-            container,
-            "OptionsSliderTemplate"
-        )
+    if SLIDER_TEMPLATE then
+
+        slider =
+            CreateFrame(
+                "Slider",
+                nil,
+                container,
+                SLIDER_TEMPLATE
+            )
+
+    else
+
+        slider =
+            CreateFrame(
+                "Slider",
+                nil,
+                container
+            )
+
+    end
 
     slider:SetOrientation(
         "VERTICAL"
@@ -813,15 +969,15 @@ local function CreateVolumeSlider(
 
     slider:SetSize(
         18,
-        95
+        120
     )
 
     slider:SetPoint(
-        "CENTER",
+        "TOP",
         container,
-        "CENTER",
+        "TOP",
         0,
-        0
+        -40
     )
 
     slider:SetMinMaxValues(
@@ -838,23 +994,95 @@ local function CreateVolumeSlider(
     )
 
     --------------------------------------------------
-    -- Remove Default Text
+    -- -
     --------------------------------------------------
 
-    if _G[sliderName .. "Low"] then
-        _G[sliderName .. "Low"]:SetText("")
-    end
+    local minusButton =
+        CreateAdjustButton(
+            container,
+            "-",
+            "BOTTOM",
+            slider,
+            "TOP",
+            0,
+            0,
 
-    if _G[sliderName .. "High"] then
-        _G[sliderName .. "High"]:SetText("")
-    end
+            function()
 
-    if _G[sliderName .. "Text"] then
-        _G[sliderName .. "Text"]:SetText("")
-    end
+                local value =
+                    GetVolume(
+                        data.cvar
+                    )
+
+                SetVolume(
+                    data.cvar,
+                    value - 0.01
+                )
+
+                local object =
+                    channelSliders[
+                        data.cvar
+                    ]
+
+                if object then
+
+                    object.slider:SetValue(
+                        GetVolume(
+                            data.cvar
+                        )
+                    )
+
+                end
+
+            end
+        )
 
     --------------------------------------------------
-    -- Percentage
+    -- +
+    --------------------------------------------------
+
+    local plusButton =
+        CreateAdjustButton(
+            container,
+            "+",
+            "TOP",
+            slider,
+            "BOTTOM",
+            0,
+            0,
+
+            function()
+
+                local value =
+                    GetVolume(
+                        data.cvar
+                    )
+
+                SetVolume(
+                    data.cvar,
+                    value + 0.01
+                )
+
+                local object =
+                    channelSliders[
+                        data.cvar
+                    ]
+
+                if object then
+
+                    object.slider:SetValue(
+                        GetVolume(
+                            data.cvar
+                        )
+                    )
+
+                end
+
+            end
+        )
+
+    --------------------------------------------------
+    -- Percent
     --------------------------------------------------
 
     local percentText =
@@ -866,12 +1094,69 @@ local function CreateVolumeSlider(
 
     percentText:SetPoint(
         "BOTTOM",
+        container,
+        "BOTTOM",
         0,
-        0
+        -18
     )
 
+    --------------------------------------------------
+    -- Slider Callback
+    --------------------------------------------------
+
+    slider:SetScript(
+        "OnValueChanged",
+        function(
+            self,
+            value
+        )
+
+            SetVolume(
+                data.cvar,
+                value
+            )
+
+            percentText:SetText(
+                Percent(value)
+                ..
+                "%"
+            )
+
+            if
+                data.cvar
+                ==
+                "Sound_MasterVolume"
+            then
+
+                UpdateSpeakerIcon()
+
+            end
+
+        end
+    )
+
+    channelSliders[
+        data.cvar
+    ] = {
+
+        slider =
+            slider,
+
+        percent =
+            percentText,
+
+        plus =
+            plusButton,
+
+        minus =
+            minusButton
+
+    }
+
+end
+
 --------------------------------------------------
--- Output Device
+-- Output Device Label
 --------------------------------------------------
 
 local outputLabel =
@@ -886,53 +1171,197 @@ outputLabel:SetPoint(
     controlPanel,
     "BOTTOMLEFT",
     22,
-    48
+    49
 )
 
 outputLabel:SetText(
-    L.OUTPUT_DEVICE
+    TEXT_OUTPUT_DEVICE
 )
 
 --------------------------------------------------
--- Output Device Dropdown
+-- Output Dropdown
 --------------------------------------------------
 
-local outputDropdown =
-    CreateFrame(
-        "DropdownButton",
-        "QuickVolumeOutputDropdown",
-        controlPanel,
-        "WowStyle1DropdownTemplate"
-    )
+local outputDropdown
+
+if NDUI_ENABLED then
+
+    --------------------------------------------------
+    -- Plain DropdownButton
+    -- NDui.lua draws appearance
+    --------------------------------------------------
+
+    outputDropdown =
+        CreateFrame(
+            "DropdownButton",
+            "QuickVolumeOutputDropdown",
+            controlPanel
+        )
+
+else
+
+    --------------------------------------------------
+    -- Blizzard default appearance
+    --------------------------------------------------
+
+    outputDropdown =
+        CreateFrame(
+            "DropdownButton",
+            "QuickVolumeOutputDropdown",
+            controlPanel,
+            "WowStyle1DropdownTemplate"
+        )
+
+end
 
 outputDropdown:SetPoint(
     "TOPLEFT",
     outputLabel,
     "BOTTOMLEFT",
-    -4,
-    -6
+    0,
+    -5
 )
 
-outputDropdown:SetWidth(
-    275
+outputDropdown:SetSize(
+    275,
+    28
 )
 
 --------------------------------------------------
--- Get Current Output Device
+-- NDui Dropdown Text
 --------------------------------------------------
 
-local function GetCurrentOutputDriverIndex()
+local outputCustomText
 
-    return tonumber(
-        GetCVar(
-            "Sound_OutputDriverIndex"
+if NDUI_ENABLED then
+
+    outputCustomText =
+        outputDropdown:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontHighlightSmall"
         )
-    ) or 0
+
+    outputCustomText:SetPoint(
+        "LEFT",
+        outputDropdown,
+        "LEFT",
+        10,
+        0
+    )
+
+    outputCustomText:SetPoint(
+        "RIGHT",
+        outputDropdown,
+        "RIGHT",
+        -30,
+        0
+    )
+
+    outputCustomText:SetJustifyH(
+        "LEFT"
+    )
+
+    outputDropdown.QuickVolumeText =
+        outputCustomText
 
 end
 
 --------------------------------------------------
--- Apply Output Device
+-- Output Driver Helpers
+--------------------------------------------------
+
+local function GetCurrentOutputDriverIndex()
+
+    return
+        tonumber(
+            GetCVar(
+                "Sound_OutputDriverIndex"
+            )
+        )
+        or
+        0
+
+end
+
+local function GetOutputDriverName(index)
+
+    if
+        not
+        Sound_GameSystem_GetOutputDriverNameByIndex
+    then
+        return nil
+    end
+
+    return
+        Sound_GameSystem_GetOutputDriverNameByIndex(
+            index
+        )
+
+end
+
+--------------------------------------------------
+-- Refresh Output Dropdown Text
+--------------------------------------------------
+
+local function RefreshOutputDropdownText()
+
+    local index =
+        GetCurrentOutputDriverIndex()
+
+    local driverName =
+        GetOutputDriverName(
+            index
+        )
+
+    if
+        not driverName
+        or
+        driverName == ""
+    then
+
+        driverName =
+            TEXT_OUTPUT_DEVICE
+
+    end
+
+    --------------------------------------------------
+    -- NDui Custom Text
+    --------------------------------------------------
+
+    if outputDropdown.QuickVolumeText then
+
+        outputDropdown.QuickVolumeText:SetText(
+            driverName
+        )
+
+    end
+
+    --------------------------------------------------
+    -- Blizzard Dropdown
+    --------------------------------------------------
+
+    if outputDropdown.SetDefaultText then
+
+        outputDropdown:SetDefaultText(
+            driverName
+        )
+
+    end
+
+end
+
+--------------------------------------------------
+-- Export Refresh Function
+--
+-- NDui.lua can call this if needed
+--------------------------------------------------
+
+QuickVolume_RefreshOutputDropdown =
+    RefreshOutputDropdownText
+
+--------------------------------------------------
+-- Change Output Device
 --------------------------------------------------
 
 local function SetOutputDevice(index)
@@ -942,48 +1371,72 @@ local function SetOutputDevice(index)
         index
     )
 
-    --------------------------------------------------
-    -- Restart WoW Sound Engine
-    --------------------------------------------------
-
-    if Sound_GameSystem_RestartSoundSystem then
+    if
+        Sound_GameSystem_RestartSoundSystem
+    then
 
         Sound_GameSystem_RestartSoundSystem()
 
     end
 
+    C_Timer.After(
+        0.2,
+        function()
+
+            RefreshOutputDropdownText()
+
+        end
+    )
+
 end
 
 --------------------------------------------------
--- Initialize Dropdown
+-- Setup Output Menu
 --------------------------------------------------
 
 local function SetupOutputDropdown()
 
+    if
+        not
+        outputDropdown.SetupMenu
+    then
+
+        print(
+            "|cffff3030QuickVolume:|r "
+            ..
+            "DropdownButton SetupMenu is unavailable."
+        )
+
+        return
+
+    end
+
     outputDropdown:SetupMenu(
-        function(dropdown, rootDescription)
+        function(
+            dropdown,
+            rootDescription
+        )
 
             local numDrivers = 0
 
-            if Sound_GameSystem_GetNumOutputDrivers then
+            if
+                Sound_GameSystem_GetNumOutputDrivers
+            then
 
                 numDrivers =
                     Sound_GameSystem_GetNumOutputDrivers()
-                    or 0
+                    or
+                    0
 
             end
 
-            local currentIndex =
-                GetCurrentOutputDriverIndex()
-
-            --------------------------------------------------
-            -- Output Drivers
-            --------------------------------------------------
-
-            for index = 0, numDrivers - 1 do
+            for index =
+                0,
+                numDrivers - 1
+            do
 
                 local driverName =
-                    Sound_GameSystem_GetOutputDriverNameByIndex(
+                    GetOutputDriverName(
                         index
                     )
 
@@ -993,6 +1446,9 @@ local function SetupOutputDropdown()
                     driverName ~= ""
                 then
 
+                    local driverIndex =
+                        index
+
                     rootDescription:CreateRadio(
                         driverName,
 
@@ -1000,14 +1456,15 @@ local function SetupOutputDropdown()
 
                             return
                                 GetCurrentOutputDriverIndex()
-                                == index
+                                ==
+                                driverIndex
 
                         end,
 
                         function()
 
                             SetOutputDevice(
-                                index
+                                driverIndex
                             )
 
                         end
@@ -1025,175 +1482,14 @@ end
 SetupOutputDropdown()
 
 --------------------------------------------------
--- Minus
--- 上方
---------------------------------------------------
-
-local minusButton =
-    CreateAdjustButton(
-        container,
-        "-",
-        "BOTTOM",
-        slider,
-        "TOP",
-        0,
-        4,
-
-        function()
-
-            local value =
-                GetVolume(
-                    data.cvar
-                )
-
-            SetVolume(
-                data.cvar,
-                value - 0.01
-            )
-
-            local object =
-                channelSliders[
-                    data.cvar
-                ]
-
-            if object then
-
-                object.slider:SetValue(
-                    GetVolume(
-                        data.cvar
-                    )
-                )
-
-            end
-
-        end
-    )
-
---------------------------------------------------
--- Plus
--- 下方
---------------------------------------------------
-
-local plusButton =
-    CreateAdjustButton(
-        container,
-        "+",
-        "TOP",
-        slider,
-        "BOTTOM",
-        0,
-        -4,
-
-        function()
-
-            local value =
-                GetVolume(
-                    data.cvar
-                )
-
-            SetVolume(
-                data.cvar,
-                value + 0.01
-            )
-
-            local object =
-                channelSliders[
-                    data.cvar
-                ]
-
-            if object then
-
-                object.slider:SetValue(
-                    GetVolume(
-                        data.cvar
-                    )
-                )
-
-            end
-
-        end
-    )
-
-    --------------------------------------------------
-    -- Slider Change
-    --------------------------------------------------
-
-    slider:SetScript(
-        "OnValueChanged",
-        function(self, value)
-
-            SetVolume(
-                data.cvar,
-                value
-            )
-
-            percentText:SetText(
-                Percent(value)
-                .. "%"
-            )
-
-            if data.cvar ==
-                "Sound_MasterVolume"
-            then
-
-                masterSlider:SetValue(
-                    value
-                )
-
-                UpdateSpeakerIcon()
-
-            end
-
-        end
-    )
-
-    --------------------------------------------------
-    -- Store
-    --------------------------------------------------
-
-    channelSliders[
-        data.cvar
-    ] = {
-
-        slider =
-            slider,
-
-        percent =
-            percentText,
-
-        plus =
-            plusButton,
-
-        minus =
-            minusButton
-    }
-
-end
-
---------------------------------------------------
--- Create Four Channels
---------------------------------------------------
-
-for index, data
-    in ipairs(channels)
-do
-
-    CreateVolumeSlider(
-        controlPanel,
-        data,
-        index
-    )
-
-end
-
---------------------------------------------------
--- Update Control Panel
+-- Update Full Control Panel
 --------------------------------------------------
 
 local function UpdateControlPanel()
 
-    for _, data
-        in ipairs(channels)
+    for _,
+        data
+    in ipairs(channels)
     do
 
         local object =
@@ -1201,21 +1497,28 @@ local function UpdateControlPanel()
                 data.cvar
             ]
 
-        local value =
-            GetVolume(
-                data.cvar
+        if object then
+
+            local value =
+                GetVolume(
+                    data.cvar
+                )
+
+            object.slider:SetValue(
+                value
             )
 
-        object.slider:SetValue(
-            value
-        )
+            object.percent:SetText(
+                Percent(value)
+                ..
+                "%"
+            )
 
-        object.percent:SetText(
-            Percent(value)
-            .. "%"
-        )
+        end
 
     end
+
+    RefreshOutputDropdownText()
 
     UpdateSpeakerIcon()
 
@@ -1239,7 +1542,6 @@ local function CancelHideTimer()
 
 end
 
-
 local function ShowHoverPanel()
 
     if controlPanel:IsShown() then
@@ -1248,10 +1550,6 @@ local function ShowHoverPanel()
 
     CancelHideTimer()
 
-    ----------------------------------------------
-    -- 根据喇叭当前位置重新决定弹出方向
-    ----------------------------------------------
-
     UpdateHoverPosition()
 
     UpdateMasterSlider()
@@ -1259,7 +1557,6 @@ local function ShowHoverPanel()
     hoverPanel:Show()
 
 end
-
 
 local function HideHoverDelayed()
 
@@ -1287,26 +1584,8 @@ local function HideHoverDelayed()
 end
 
 --------------------------------------------------
--- Hover Scripts
+-- Hover Panel Mouse
 --------------------------------------------------
-
-button:SetScript(
-    "OnEnter",
-    function()
-
-        ShowHoverPanel()
-
-    end
-)
-
-button:SetScript(
-    "OnLeave",
-    function()
-
-        HideHoverDelayed()
-
-    end
-)
 
 hoverPanel:SetScript(
     "OnEnter",
@@ -1326,134 +1605,8 @@ hoverPanel:SetScript(
     end
 )
 
-hoverPanel:SetSize(
-    64,
-    190
-)
-
-hoverPanel:SetClampedToScreen(true)
-
-hoverPanel:Hide()
-
 --------------------------------------------------
--- Click
---------------------------------------------------
-
-button:SetScript(
-    "OnClick",
-    function(self, mouseButton)
-
-        --------------------------------------------------
-        -- Left Click
-        --------------------------------------------------
-
-        if mouseButton ==
-            "LeftButton"
-        then
-
-            hoverPanel:Hide()
-
-            if
-                controlPanel:IsShown()
-            then
-
-                controlPanel:Hide()
-
-            else
-
-                UpdateControlPanel()
-
-                controlPanel:Show()
-
-            end
-
-        --------------------------------------------------
-        -- Middle Click
-        --------------------------------------------------
-
-        elseif mouseButton ==
-            "MiddleButton"
-        then
-
-            local currentVolume =
-                GetVolume(
-                    "Sound_MasterVolume"
-                )
-
-            if currentVolume > 0 then
-
-                previousMasterVolume =
-                    currentVolume
-
-                SetVolume(
-                    "Sound_MasterVolume",
-                    0
-                )
-
-            else
-
-                if
-                    previousMasterVolume <= 0
-                then
-
-                    previousMasterVolume =
-                        1
-                end
-
-                SetVolume(
-                    "Sound_MasterVolume",
-                    previousMasterVolume
-                )
-
-            end
-
-            UpdateMasterSlider()
-            UpdateControlPanel()
-
-        end
-
-    end
-)
-
---------------------------------------------------
--- Mouse Wheel
---------------------------------------------------
-
-button:EnableMouseWheel(true)
-
-button:SetScript(
-    "OnMouseWheel",
-    function(self, delta)
-
-        local volume =
-            GetVolume(
-                "Sound_MasterVolume"
-            )
-
-        volume =
-            volume +
-            delta * 0.05
-
-        SetVolume(
-            "Sound_MasterVolume",
-            volume
-        )
-
-        UpdateMasterSlider()
-
-        if
-            controlPanel:IsShown()
-        then
-
-            UpdateControlPanel()
-
-        end
-
-    end
-)
-
---------------------------------------------------
--- Tooltip
+-- Button Tooltip / Hover
 --------------------------------------------------
 
 button:SetScript(
@@ -1468,25 +1621,25 @@ button:SetScript(
         )
 
         GameTooltip:AddLine(
-            L.TITLE
+            TEXT_TITLE
         )
 
         GameTooltip:AddLine(
-            L.TOOLTIP_LEFT,
+            TEXT_TOOLTIP_LEFT,
             1,
             1,
             1
         )
 
         GameTooltip:AddLine(
-            L.TOOLTIP_MIDDLE,
+            TEXT_TOOLTIP_MIDDLE,
             1,
             1,
             1
         )
 
         GameTooltip:AddLine(
-            L.TOOLTIP_WHEEL,
+            TEXT_TOOLTIP_WHEEL,
             1,
             1,
             1
@@ -1497,17 +1650,149 @@ button:SetScript(
     end
 )
 
-button:HookScript(
+button:SetScript(
     "OnLeave",
     function()
 
         GameTooltip:Hide()
 
+        HideHoverDelayed()
+
     end
 )
 
 --------------------------------------------------
--- Login
+-- Button Click
+--------------------------------------------------
+
+button:SetScript(
+    "OnClick",
+    function(
+        self,
+        mouseButton
+    )
+
+        --------------------------------------------------
+        -- Left Click:
+        -- full control panel
+        --------------------------------------------------
+
+        if mouseButton == "LeftButton" then
+
+            hoverPanel:Hide()
+
+            if controlPanel:IsShown() then
+
+                controlPanel:Hide()
+
+            else
+
+                UpdateControlPanel()
+
+                controlPanel:Show()
+
+            end
+
+        --------------------------------------------------
+        -- Middle Click:
+        -- mute / restore
+        --------------------------------------------------
+
+        elseif mouseButton == "MiddleButton" then
+
+            local volume =
+                GetVolume(
+                    "Sound_MasterVolume"
+                )
+
+            if volume > 0 then
+
+                previousMasterVolume =
+                    volume
+
+                SetVolume(
+                    "Sound_MasterVolume",
+                    0
+                )
+
+            else
+
+                local restoreVolume =
+                    previousMasterVolume
+
+                if
+                    not restoreVolume
+                    or
+                    restoreVolume <= 0
+                then
+
+                    restoreVolume = 1
+
+                end
+
+                SetVolume(
+                    "Sound_MasterVolume",
+                    restoreVolume
+                )
+
+            end
+
+            UpdateMasterSlider()
+
+            if controlPanel:IsShown() then
+
+                UpdateControlPanel()
+
+            end
+
+        end
+
+    end
+)
+
+--------------------------------------------------
+-- Mouse Wheel
+--------------------------------------------------
+
+button:EnableMouseWheel(
+    true
+)
+
+button:SetScript(
+    "OnMouseWheel",
+    function(
+        self,
+        delta
+    )
+
+        local volume =
+            GetVolume(
+                "Sound_MasterVolume"
+            )
+
+        volume =
+            volume
+            +
+            delta * 0.05
+
+        SetVolume(
+            "Sound_MasterVolume",
+            volume
+        )
+
+        UpdateMasterSlider()
+
+        if controlPanel:IsShown() then
+
+            UpdateControlPanel()
+
+        end
+
+    end
+)
+
+--------------------------------------------------
+-- PLAYER_LOGIN
 --------------------------------------------------
 
 addon:RegisterEvent(
@@ -1527,9 +1812,23 @@ addon:SetScript(
 
             previousMasterVolume =
                 volume
+
         end
 
         UpdateSpeakerIcon()
+
+        UpdateMasterSlider()
+
+        UpdateControlPanel()
+
+        C_Timer.After(
+            0,
+            function()
+
+                RefreshOutputDropdownText()
+
+            end
+        )
 
     end
 )
