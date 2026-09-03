@@ -1,7 +1,7 @@
 # QuickVolume
 
 <p align="center">
-  <img src="screenshots/preview.png" width="600">
+  <img src="[screenshots/preview.png](https://github.com/cyanz/WOW-ADDONS/blob/main/QuickVolume/preview.png)" >
 </p>
 
 A lightweight World of Warcraft addon for fast volume control.
