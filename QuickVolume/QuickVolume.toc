@@ -1,0 +1,8 @@
+## Interface: 120100
+## Title: QuickVolume
+## Notes: Quick mouse volume control
+## Author: Cyan
+## Version: 2.2
+
+lang.lua
+QuickVolume.lua
