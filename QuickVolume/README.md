@@ -1,5 +1,9 @@
 # QuickVolume
 
+<p align="center">
+  <img src="screenshots/preview.png" width="600">
+</p>
+
 A lightweight World of Warcraft addon for fast volume control.
 
 QuickVolume adds a small draggable speaker button to your UI, letting you adjust game audio without opening the full Sound settings menu.
